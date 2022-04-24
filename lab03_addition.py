@@ -319,6 +319,7 @@ class Switch(app_manager.RyuApp):
 
         parser = self.datapath[1].ofproto_parser
         ofp = self.datapath[1].ofproto
+        fport = -1
 
         new_topo = copy.deepcopy(self.topo_map)
         new_topo.remove_node(dpid_final)
@@ -338,6 +339,7 @@ class Switch(app_manager.RyuApp):
                 # from ipv4_src to ipv4_dst
                 next_switch = path[i + 1]
                 out_port = self.ss_link[(cur_switch, next_switch)][0]
+                fport = out_port
                 actions = [parser.OFPActionOutput(out_port)]
                 match = parser.OFPMatch(eth_type=0x800, ipv4_src=ipv4_src, ipv4_dst=ipv4_dst)
                 self.add_flow(self.datapath[cur_switch], 20, match, actions, 300, 600)
@@ -453,7 +455,7 @@ class Switch(app_manager.RyuApp):
         data = None
         if msg.buffer_id == ofp.OFP_NO_BUFFER:
             data = msg.data
-        out_port = port_begin
+        out_port = fport
         actions = [parser.OFPActionOutput(out_port)]
         out = parser.OFPPacketOut(datapath=msg.datapath, buffer_id=msg.buffer_id,
                                   in_port=msg.match['in_port'], actions=actions, data=data)
